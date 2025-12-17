@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require('cors');
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -21,9 +21,21 @@ async function run(){
     try{
         const db = client.db("City-Pulse-DB");
         const issuesCollection = db.collection("Issues");
+        const reviewsCollection = db.collection("Reviews");
 
          app.get("/issues",async(req,res)=>{
         const result = await issuesCollection.find().toArray()
+        res.send(result);  
+        });
+
+        app.get("/issues/:id", async(req,res)=>{
+          const {id} = req.params
+          const result = await issuesCollection.findOne({_id: new ObjectId(id)})
+          res.send(result)
+        })
+
+         app.get("/reviews",async(req,res)=>{
+        const result = await reviewsCollection.find().toArray()
         res.send(result)  
         })
 
