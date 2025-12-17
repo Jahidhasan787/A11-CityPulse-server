@@ -32,7 +32,16 @@ async function run(){
           const {id} = req.params
           const result = await issuesCollection.findOne({_id: new ObjectId(id)})
           res.send(result)
-        })
+        });
+
+        app.post("/issues", async(req,res)=>{
+          const data = req.body
+          const result = await issuesCollection.insertOne (data)
+           res.send({
+            success:true,
+            result
+           })
+        });
 
          app.get("/reviews",async(req,res)=>{
         const result = await reviewsCollection.find().toArray()
