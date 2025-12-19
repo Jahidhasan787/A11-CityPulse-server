@@ -22,8 +22,9 @@ async function run(){
         const db = client.db("City-Pulse-DB");
         const issuesCollection = db.collection("Issues");
         const reviewsCollection = db.collection("Reviews");
+        const resolvedCollection = db.collection("Resolved-issues");
 
-         app.get("/issues",async(req,res)=>{
+        app.get("/issues",async(req,res)=>{
         const result = await issuesCollection.find().toArray()
         res.send(result);  
         });
@@ -43,10 +44,21 @@ async function run(){
            })
         });
 
+         app.get("/my-issues",async(req,res)=>{
+          const email = req.query.email;
+          const result = await issuesCollection.find({email:email}).toArray();
+          res.send(result);
+        })
+
+        app.get("/resolve-issues",async(req,res)=>{
+        const result = await issuesCollection.find({status:"Resolved"}).sort({date:-1}).limit(6).toArray()
+        res.send(result);  
+        });
+
          app.get("/reviews",async(req,res)=>{
         const result = await reviewsCollection.find().toArray()
         res.send(result)  
-        })
+        });
 
     }
     finally{
