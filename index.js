@@ -22,10 +22,9 @@ async function run(){
         const db = client.db("City-Pulse-DB");
         const issuesCollection = db.collection("Issues");
         const reviewsCollection = db.collection("Reviews");
-        const resolvedCollection = db.collection("Resolved-issues");
 
         app.get("/issues",async(req,res)=>{
-        const result = await issuesCollection.find().toArray()
+        const result = await issuesCollection.find().sort({date:-1}).toArray()
         res.send(result);  
         });
 
@@ -59,6 +58,20 @@ async function run(){
         const result = await reviewsCollection.find().toArray()
         res.send(result)  
         });
+
+        app.put("/issues/:id",async(req,res)=>{
+          const {id} = req.params;
+          const data = req.body;
+          const objectId = new ObjectId(id);
+          const filter = {_id: objectId}
+          const update = {
+            $set : data,
+          }
+          const result = await issuesCollection.updateOne(filter,update)
+
+          res.send(result)
+        })
+
 
         app.delete("/issues/:id", async(req,res)=>{
           const {id} = req.params;
