@@ -25,7 +25,7 @@ async function run(){
         const reviewsCollection = db.collection("Reviews");
 
         app.get("/issues",async(req,res)=>{
-        const result = await issuesCollection.find().sort({date:-1}).toArray()
+        const result = await issuesCollection.find().sort({priority:1}).toArray()
         res.send(result);  
         });
 
@@ -101,13 +101,33 @@ async function run(){
         issueId : paymentInfo.issueId,
       },
 
-      success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
+      success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-cancelled`,
 
        });
       console.log(session);
       res.send({url: session.url});
+      });
+
+      app.patch('/payment-success', async(req ,res)=>{
+        const sessionId = req.query.session_id;
+
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        if(session.payment_status === 'paid'){
+          const id = session.metadata.issueId;
+          const query = {_id: new ObjectId(id)}
+          const update ={
+            $set :{
+              priority: 'High',
+            }
+          }
+          const result = await issuesCollection.updateOne(query ,update);
+          res.send(result)
+        }
+
+        res.send({success: false})
       })
+
 
     }
     finally{
