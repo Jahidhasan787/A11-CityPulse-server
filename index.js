@@ -4,6 +4,7 @@ require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
+const stripe = require('stripe')(process.env.STRIPE);
 
 app.use(cors());
 app.use(express.json());
@@ -70,15 +71,43 @@ async function run(){
           const result = await issuesCollection.updateOne(filter,update)
 
           res.send(result)
-        })
+        });
 
 
         app.delete("/issues/:id", async(req,res)=>{
           const {id} = req.params;
           const result = await issuesCollection.deleteOne({_id: new ObjectId(id)})
-
           res.send(result);
-        })
+        });
+
+      app.post('/create-checkout-session', async(req ,res)=>{
+        const paymentInfo = req.body;
+        const session = await stripe.checkout.sessions.create({
+          line_items: [
+      {
+        price_data :{
+          currency: "USD",
+          unit_amount: 10000,
+          product_data: {
+            name: paymentInfo.issueName
+          }
+      
+        },
+        quantity: 1,
+      }],
+      customer_email:paymentInfo.senderEmail,
+      mode: 'payment',
+      metadata:{
+        issueId : paymentInfo.issueId,
+      },
+
+      success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
+      cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-cancelled`,
+
+       });
+      console.log(session);
+      res.send({url: session.url});
+      })
 
     }
     finally{
