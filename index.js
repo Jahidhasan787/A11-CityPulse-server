@@ -23,6 +23,7 @@ async function run(){
         const db = client.db("City-Pulse-DB");
         const issuesCollection = db.collection("Issues");
         const reviewsCollection = db.collection("Reviews");
+        const paymentCollection = db.collection('payments');
 
         app.get("/issues",async(req,res)=>{
         const result = await issuesCollection.find().sort({priority:1}).toArray()
@@ -99,6 +100,8 @@ async function run(){
       mode: 'payment',
       metadata:{
         issueId : paymentInfo.issueId,
+        issueName: paymentInfo.issueName,
+
       },
 
       success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
@@ -122,7 +125,24 @@ async function run(){
             }
           }
           const result = await issuesCollection.updateOne(query ,update);
-          res.send(result)
+
+          const payment = {
+            amount : session.amount_total/100,
+            currency: session.currency,
+            customerEmail: session.customer_email,
+            issueId: session.metadata.issueId,
+            issueName: session.metadata.issueName,
+            transactionId: session.payment_intent,
+            paymentStatus: session.payment_status,
+            paidAt: new Date(),
+            trackingId:'',
+          }
+
+          if(session.payment_status === "paid"){
+              const resultPamyment = await paymentCollection.insertOne(payment);
+              res.send({success: true, modifyIssue: result, paymentInfo: resultPamyment })
+          }
+
         }
 
         res.send({success: false})
