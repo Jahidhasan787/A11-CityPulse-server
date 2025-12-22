@@ -159,6 +159,11 @@ async function run(){
         res.send(result);  
         });
 
+        app.get("/boosted-issues",async(req,res)=>{
+        const result = await issuesCollection.find({priority: "High"}).toArray()
+        res.send(result);  
+        });
+
         app.get("/issues/:id", async(req,res)=>{
           const {id} = req.params
           const result = await issuesCollection.findOne({_id: new ObjectId(id)})
