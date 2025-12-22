@@ -61,11 +61,30 @@ async function run(){
         const paymentCollection = db.collection('payments');
         const staffCollection = db.collection('staffs');
 
+        const verifyAdmin = async(req,res, next) =>{
+          const email = req.decoded_email;
+          const query = {email}
+          const user = await userCollection.findOne(query);
+          if(!user || user.role !== "admin"){
+            return res.status(403).send({message: "forbidden access"})
+
+          }
+          next();
+        }
+
 
         app.get("/users",verifyFbToken, async(req,res)=>{
           const cursor =  userCollection.find();
           const result = await cursor.toArray();
           res.send(result);
+        })
+
+
+        app.get('/users/:email/role', async(req,res)=>{
+          const email = req.params.email;
+          const query = {email};
+          const user = await userCollection.findOne(query)
+          res.send({role:user?.role || 'user' })
         })
 
         app.post('/users',async(req,res)=>{
@@ -77,7 +96,7 @@ async function run(){
           res.send(result);
         })
 
-        app.patch("/users/:id", async(req,res)=>{
+        app.patch("/users/:id/role", verifyFbToken, verifyAdmin,  async(req,res)=>{
           const id = req.params.id;
           const roleInfo = req.body;
           const query ={_id: new ObjectId(id)}
@@ -120,7 +139,7 @@ async function run(){
             }
           }
 
-          const result = await staffCollection.updateOne(query,updateDoc);
+          const result = await staffCollection.updateOne(query, updateDoc);
           res.send(result);
 
         })
