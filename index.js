@@ -148,6 +148,12 @@ async function run(){
 
         })
 
+        app.delete("/staffs/:id", async(req,res)=>{
+          const {id} = req.params;
+          const result = await staffCollection.deleteOne({_id: new ObjectId(id)})
+          res.send(result);
+        });
+
         app.get("/issues",async(req,res)=>{
         const result = await issuesCollection.find().sort({priority:1}).toArray()
         res.send(result);  
