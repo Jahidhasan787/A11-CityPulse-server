@@ -61,12 +61,32 @@ async function run(){
         const paymentCollection = db.collection('payments');
         const staffCollection = db.collection('staffs');
 
+
+        app.get("/users",verifyFbToken, async(req,res)=>{
+          const cursor =  userCollection.find();
+          const result = await cursor.toArray();
+          res.send(result);
+        })
+
         app.post('/users',async(req,res)=>{
           const user = req.body;
           user.role = 'user';
           user.createdAt = new Date();
 
           const result = await userCollection.insertOne(user);
+          res.send(result);
+        })
+
+        app.patch("/users/:id", async(req,res)=>{
+          const id = req.params.id;
+          const roleInfo = req.body;
+          const query ={_id: new ObjectId(id)}
+          const updateDoc ={
+            $set:{
+              role:roleInfo.role
+            }
+          }
+          const result = await userCollection.updateOne(query,updateDoc);
           res.send(result);
         })
 
