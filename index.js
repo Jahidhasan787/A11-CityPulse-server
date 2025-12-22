@@ -59,6 +59,7 @@ async function run(){
         const userCollection = db.collection("users");
         const reviewsCollection = db.collection("Reviews");
         const paymentCollection = db.collection('payments');
+        const staffCollection = db.collection('staffs');
 
         app.post('/users',async(req,res)=>{
           const user = req.body;
@@ -67,6 +68,41 @@ async function run(){
 
           const result = await userCollection.insertOne(user);
           res.send(result);
+        })
+
+        app.get('/staffs', async(req,res)=>{
+          const query = {}
+          if(req.query.status){
+            query.status = req.query.status;
+          }
+          const cursor = staffCollection.find(query)
+          const result = await cursor.toArray();
+          res.send(result);
+        })
+
+        app.post("/staffs", async(req,res)=>{
+          const staff = req.body;
+          staff.status = "pending"
+          staff.createdAt = new Date();
+          
+          const result =  await staffCollection.insertOne(staff);
+          res.send(result);
+        })
+
+        app.patch('/staffs/:id', verifyFbToken, async(req,res)=>{
+          const status = req.body.status;
+          const id = req.params.id;
+          const query ={_id : new ObjectId(id)}
+          const updateDoc = {
+            $set:{
+              status: status,
+
+            }
+          }
+
+          const result = await staffCollection.updateOne(query,updateDoc);
+          res.send(result);
+
         })
 
         app.get("/issues",async(req,res)=>{
